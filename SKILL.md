@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict UI/UX design rules, typography guidelines, RTL/LTR localization standards, component constraints, and real-time VS Code diagnostics verification for Flutter applications. Always apply these rules when creating, refactoring, or styling screens, widgets, dialogs, forms, or bottom sheets.
+description: Strict UI/UX design rules, typography guidelines, RTL/LTR localization standards, component constraints, anti-AI custom aesthetics, smooth micro-animations, and real-time VS Code diagnostics verification for Flutter applications. Always apply these rules when creating, refactoring, or styling screens, widgets, dialogs, forms, or bottom sheets.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -44,7 +44,7 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ## 7. Strict RTL/LTR Directional Layout Rules
 - **Directional Widgets Only:** Always design layouts to seamlessly support both Persian (RTL) and English (LTR) without visual breakage:
   - Use `EdgeInsetsDirectional.only(start: ..., end: ...)` or `EdgeInsetsDirectional.fromSTEB(...)` instead of `EdgeInsets.only(left: ..., right: ...)`.
-  - Use `AlignmentDirectional.centerStart` / `centerEnd` instead of `Alignment.centerLeft` / `centerRight`.
+  - Use `AlignmentDirectional.centerStart` / `centerEnd` instead of `Alignment.centerLeft` / `Alignment.centerRight`.
   - Use `PositionedDirectional` instead of `Positioned` with left/right values.
   - Never hardcode `TextDirection.rtl` or `TextDirection.ltr` unless specifically formatting an isolated element like an international phone number, email, or URL.
 
@@ -74,7 +74,23 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ## 13. Zero Emojis in UI Copy
 - **Strictly Professional Text:** Never insert emojis (e.g., 🎉, ⚠️, ❌, ✅, 🚀) into UI labels, `SnackBar` messages, dialog descriptions, empty state texts, or error messages unless explicitly provided in the user's prompt.
 
-## 14. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
+## 14. Anti-AI UI & Custom Aesthetic Guidelines
+- **Avoid Generic AI Color Palettes:** Never default to the cliché "AI purple/indigo on dark background" or generic Material 3 pastel chips unless explicitly required by the brand. Use purposeful, high-contrast, premium color harmonies (e.g., deep charcoal/slate surfaces accented with rich, restrained brand tones).
+- **Customized Card & Surface Treatment:** Avoid repetitive flat white cards with identical light shadows. Vary container styling based on hierarchy:
+  - Use subtle, clean borders (`Border.all(color: theme.dividerColor.withValues(alpha: 0.3))`) combined with flat surfaces (`elevation: 0`) instead of heavy drop shadows.
+- **Typography Hierarchy & Personality:** Break away from monotonous body text by utilizing dynamic font weights (e.g., mixing `w300` for subtitles with `w600` for key data points) to create an editorial, human-designed feel.
+- **Intentional Negative Space (Whitespace):** Do not cram elements together. Use generous, intentional whitespace (`SizedBox` heights of `24` to `32` for major section breaks) to give components room to breathe.
+- **Customized Empty & Loading States:** Never use raw, default `CircularProgressIndicator()` in the middle of a blank screen. Always design minimalist placeholder layouts or sleek contextual loading indicators.
+
+## 15. Purposeful & Smooth Micro-Animations (No Dead UI)
+- **Avoid Static, Jerky UI Transitions:** Never leave screens or components feeling dead or instantly popping into existence. Integrate purposeful, subtle micro-animations across the app without overdoing it or causing jank.
+- **Where to Apply Animations:**
+  - **List Items / Feed Entries:** Use subtle entrance animations (e.g., lightweight `AnimatedSwitcher` or staggered fade-ins) when items load or update.
+  - **State Switching (Tabs, Filters, Toggle Cards):** Use `AnimatedContainer`, `AnimatedCrossFade`, or smooth sizing/color transitions instead of abrupt hard switches.
+  - **Buttons & Interactive Elements:** Provide immediate, polished tactile feedback on press (e.g., gentle scale or opacity bounce using `InkWell` / custom gestures).
+- **Performance & Duration Control:** Keep animation durations short, snappy, and natural (between `200ms` to `350ms`) using smooth curves (e.g., `Curves.easeInOut` or `Curves.easeOutCubic`). Avoid long, slow, or distracting animations that slow down the user experience.
+
+## 16. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
 - **Check After Every Single Edit:** Immediately after writing or modifying any code block or file—and BEFORE moving on to the next file or finishing the task—you MUST inspect the IDE diagnostics / VS Code **Problems** panel (using `get_diagnostics` / IDE linter tools or running `dart analyze` / `flutter analyze` on the touched files).
 - **Mandatory Prevention of Common Flutter/Dart Analyzer Warnings:** You must proactively avoid writing patterns that trigger analyzer warnings:
   1. **`deprecated_member_use` (`withOpacity`):** NEVER use `.withOpacity(...)` on `Color`. Always use `.withValues(alpha: ...)` instead (e.g., `color.withValues(alpha: 0.5)`).
@@ -85,8 +101,8 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
   3. **`deprecated_member_use` (State & Navigation):**
      - Use `WidgetStateProperty` / `WidgetState` instead of `MaterialStateProperty` / `MaterialState`.
      - Use `PopScope` (with `canPop` and `onPopInvokedWithResult`) instead of `WillPopScope` or `onPopInvoked`.
-  4. **`use_build_context_synchronously`:** NEVER use `BuildContext` across async gaps (`await`) without an immediate mounted check. Always place `if (!context.mounted) return;` (or `if (!mounted) return;` inside `State`) right before accessing `context` (e.g., `Navigator.of(context)`, `ScaffoldMessenger.of(context)`, `showDialog`) after an `await`.
-  5. **`unnecessary_import`:** NEVER import `dart:typed_data` when `package:flutter/foundation.dart`, `package:flutter/material.dart`, or `package:flutter/services.dart` is already imported in the file (since `Uint8List` and `ByteData` are already exported by `foundation.dart`). Remove any redundant imports immediately.
-  6. **`depend_on_referenced_packages`:** NEVER import a package (such as `image`, `flutter_image_compress`, `path`, `http`, `intl`, `collection`, or `crypto`) simply because it exists as a transitive dependency. Before importing ANY package in `lib/`, verify that it is explicitly listed under `dependencies:` in `pubspec.yaml`; if not, add it to `pubspec.yaml` first.
-  7. **`unnecessary_underscores` (Dart 3.7+ Wildcard Variables):** NEVER use multiple underscores like `__` or `___` for unused callback parameters (e.g., `(context, __, ___) => ...`). In modern Dart, `_` is a non-binding wildcard and can be used multiple times in the same signature: ALWAYS write `(context, _, _) => ...`.
+  4. **`use_build_context_synchronously`:** NEVER use `BuildContext` across async gaps (`await`) without an immediate mounted check. Always place `if (!context.mounted) return;` (or `if (!mounted) return;` inside `State`) right before accessing `context` after an `await`.
+  5. **`unnecessary_import`:** NEVER import `dart:typed_data` when `package:flutter/foundation.dart`, `package:flutter/material.dart`, or `package:flutter/services.dart` is already imported in the file. Remove any redundant imports immediately.
+  6. **`depend_on_referenced_packages`:** NEVER import a package without verifying it is explicitly listed under `dependencies:` in `pubspec.yaml`.
+  7. **`unnecessary_underscores` (Dart 3.7+ Wildcard Variables):** NEVER use multiple underscores like `__` or `___` for unused callback parameters. In modern Dart, always write single `_` wildcards (e.g., `(context, _, _) => ...`).
 - **Completion Gate:** A task or step is NEVER considered complete until the VS Code Problems list for all created and modified files shows **0 errors, 0 warnings, and 0 info/lint hints**.
