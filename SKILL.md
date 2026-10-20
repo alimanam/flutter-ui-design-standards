@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, feature-first Clean Architecture, BLoC pattern, GetIt dependency injection, memory leak prevention, error boundaries, and real-time VS Code diagnostics verification.
+description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, component modularity & puzzle-like decomposition, Riverpod, MVVM, memory leak prevention, error boundaries, and real-time VS Code diagnostics verification.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -108,24 +108,25 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ## 20. Graceful Error Boundaries
 - **UI Fallback Protection:** Never let widget tree exceptions cause the infamous red "Screen of Death". Wrap critical asynchronous or data-driven builder widgets (like `FutureBuilder` or custom dynamic UI trees) with proper error checking and clean fallback widgets (`SizedBox.shrink()` or a polite, non-intrusive retry card) in case of null exceptions or network drops.
 
-## 21. Core Architecture, Composition & Clean Code Standards
+## 21. Core Architecture & Clean Code Standards
 - **Architecture Adaptability:** Adapt seamlessly to the existing project architecture while maintaining strict clean code principles.
-- **Modern Dart & Material 3:** Always utilize Flutter 3.x modern features, Dart 3+ syntax, and Material 3 design specifications.
-- **Component Composition & Modularity:** 
-  - Keep widgets small, focused, and single-responsibility (extract sub-widgets instead of writing giant monolithic build methods).
-  - Use proper widget composition and decomposition.
-- **Performance & Keys:**
-  - Use `const` constructors wherever possible on static widgets to minimize unnecessary widget rebuilds.
-  - Implement proper `Key` values (`ValueKey`, `ObjectKey`, or `GlobalKey`) on dynamic or reorderable lists/widgets.
-- **Naming Conventions:** Follow strict Flutter naming conventions (`PascalCase` for classes/types, `camelCase` for variables/methods/parameters, `lower_case_with_underscores` for file names).
+- **Modern Dart 3.10+ & Material 3:** Always utilize Flutter 3.x modern features, Dart 3+ syntax, and Material 3 design specifications.
 
-## 22. Feature-First Clean Architecture, BLoC & GetIt Dependency Injection
-- **Clean Architecture & BLoC Pattern:** Enforce strict separation of concerns within feature modules (`lib/features/...`), implementing clean architecture layers (Data, Domain, Presentation) and using the BLoC pattern for state management.
-- **State Management Principles:** Handle business logic purely inside BLoCs/Cubits, keeping UI widgets completely reactive to emitted states (`BlocBuilder`, `BlocListener`, `BlocConsumer`).
-- **Dependency Injection with GetIt:** Implement proper dependency injection using `GetIt` service locator for repositories, data sources, use cases, and blocs.
-- **Robust Error Handling:** Implement proper error handling across repositories and use cases (e.g., using Either types or result wrappers) to catch exceptions gracefully and propagate user-friendly error messages to the presentation layer.
+## 22. Puzzle-Like Modularity & Strict File Length Limits
+- **Decomposition Principle (Like Puzzle Pieces):** Never build monolithic, oversized widgets where hundreds of lines of UI code are crammed into a single `build` method. Break down every screen into small, independent, reusable components (like assembling puzzle pieces). Each card, header, input field, and action bar must live in its own dedicated widget class.
+- **Strict File Length Limit:** NEVER write massive files containing thousands of lines of code (e.g., avoid files exceeding 600–700 lines where possible). If a screen or feature grows, immediately extract sub-widgets into separate files inside the feature's presentation folder (e.g., `widgets/`, `components/`). Clean separation guarantees maximum readability and maintainability.
 
-## 23. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
+## 23. MVVM & Feature-First Layer Separation
+- **Clear Layer Boundaries:** Group features inside `lib/features/` (e.g., `auth/`, `products/`). Separate application code into distinct layers:
+  - **`presentation/`**: Contains UI screens (`Views`), modular widgets, and state logic (`ViewModels` / Notifiers).
+  - **`domain/`**: Contains immutable data models and abstract repository interfaces.
+  - **`data/`**: Contains concrete repository implementations and external API services.
+
+## 24. Riverpod for State Management & Dependency Injection
+- **Definitive State Management:** Utilize Riverpod as the primary solution for state management and dependency injection to ensure compile-time safety and simplified testing.
+- **Avoid Legacy Providers:** Never use `InheritedWidget` or `Provider.of<T>(context)` for dependency injection or manual state mutations (`setState` on global repos). Always rely on `ConsumerWidget`, `ConsumerStatefulWidget`, and `ref.watch()` / `ref.read()`.
+
+## 25. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
 - **Check After Every Single Edit:** Immediately after writing or modifying any code block or file—and BEFORE moving on to the next file or finishing the task—you MUST inspect the IDE diagnostics / VS Code **Problems** panel (using `get_diagnostics` / IDE linter tools or running `dart analyze` / `flutter analyze` on the touched files).
 - **Mandatory Prevention of Common Flutter/Dart Analyzer Warnings:** You must proactively avoid writing patterns that trigger analyzer warnings:
   1. **`deprecated_member_use` (`withOpacity`):** NEVER use `.withOpacity(...)` on `Color`. Always use `.withValues(alpha: ...)` instead (e.g., `color.withValues(alpha: 0.5)`).
