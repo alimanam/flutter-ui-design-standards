@@ -28,7 +28,7 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
   - Always wrap bottom sheet content inside a `SafeArea(top: false, bottom: true)` or explicitly add `MediaQuery.of(context).viewPadding.bottom` (and `viewInsets.bottom` when keyboards appear) to the bottom padding.
   - Set `isScrollControlled: true` and `useSafeArea: true` when necessary to prevent clipping or hiding content under the system nav bar.
 - **Action Button Alignment & Styling:**
-  - When a bottom sheet contains two action buttons (e.g., Confirm and Cancel), place them **side-by-side horizontally in a `Row`** using equal `Expanded` wrappers and a consistent gap (e.g., `SizedBox(width: 12)`). Never stack them vertically with mismatched styles.
+  - When a bottom sheet contains two action buttons (e.g., Confirm and Cancel), place them **side-by-side horizontally in a `Row`** using equal `Expanded` wrappers and a consistent 8pt grid gap (e.g., `SizedBox(width: 8)`). Never stack them vertically with mismatched styles.
   - Both buttons must share the exact same height (`44.0` to `48.0`), border radius, and text size, with cohesive color pairing (e.g., a primary filled button next to a matching secondary tonal/filled button of identical dimensions).
 
 ## 5. Confirmation Dialogs (AlertDialogs)
@@ -62,11 +62,11 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
   - **Cards & Containers:** `12.0` to `16.0` (`BorderRadius.circular(16)`).
   - **Dialogs & BottomSheets:** `16.0` to `20.0` (top corners for BottomSheets).
 
-## 11. Strict 8pt Grid Spacing System (NEW)
+## 11. Strict 8pt Grid Spacing System
 - **Consistent Multiples:** Enforce strict adherence to the 8pt grid system for layout padding, margins, and component gaps. 
-- **Allowed Spacing Values:** Only use spacing multiples of `4.0`, `8.0`, `16.0`, `24.0`, `32.0`, and `48.0` (e.g., `SizedBox(height: 16)` or `EdgeInsets.all(16)`). Never use arbitrary or random spacing values like `13`, `17`, or `22`.
+- **Allowed Spacing Values:** Only use spacing multiples of `4.0`, `8.0`, `16.0`, `24.0`, `32.0`, and `48.0` (e.g., `SizedBox(height: 16)` or `EdgeInsets.all(16)`). Never use arbitrary or random spacing values like `12`, `13`, `17`, or `22`.
 
-## 12. Extreme Contrast Typography Hierarchy (NEW)
+## 12. Extreme Contrast Typography Hierarchy
 - **Editorial Text Pairing:** Break away from monotonous, flat body text by utilizing extreme contrast in font weights:
   - Use ultra-light weights (`FontWeight.w300`) for secondary descriptions, captions, and subtitles.
   - Use bold/heavy weights (`FontWeight.w700` or `FontWeight.w800`) for primary metrics, amounts, and prominent section titles.
