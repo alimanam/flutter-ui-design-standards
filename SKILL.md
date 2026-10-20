@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, and real-time VS Code diagnostics verification.
+description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, memory leak prevention, error boundaries, performance optimization, and real-time VS Code diagnostics verification.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -97,7 +97,18 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
   - **Buttons & Interactive Elements:** Provide immediate, polished tactile feedback on press (e.g., gentle scale down to `0.98` using `AnimatedContainer` or custom transitions).
 - **Performance & Duration Control:** Keep animation durations short, snappy, and natural (between `200ms` to `350ms`) using smooth curves (e.g., `Curves.easeOutCubic`). Avoid long, slow, or distracting animations.
 
-## 18. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
+## 18. Memory Leak Prevention & Controller Disposal (NEW)
+- **Mandatory Controller Disposal:** Whenever a stateful component initializes controllers (`TextEditingController`, `ScrollController`, `TabController`, `AnimationController`) or Subscriptions (`StreamSubscription`, `ChangeNotifier`), they MUST be explicitly disposed of inside the `dispose()` override method to prevent severe memory leaks.
+- **No Dangling Listeners:** Always unsubscribe or cancel network streams and listeners when widgets are unmounted.
+
+## 19. ListView & Lazy Loading Performance (NEW)
+- **Never Use Column for Long Lists:** NEVER wrap dynamic or long lists inside a `Column` or `ListView(shrinkWrap: true, physics: NeverScrollableScrollPhysics())` unless the total item count is strictly fixed and very small (e.g., 3 to 5 items).
+- **Lazy Rendering Enforcement:** Always use `ListView.builder`, `ListView.separated`, or `SliverList` for dynamic or long datasets to ensure proper lazy loading, virtualization, and smooth 60/120fps scrolling performance.
+
+## 20. Graceful Error Boundaries (NEW)
+- **UI Fallback Protection:** Never let widget tree exceptions cause the infamous red "Screen of Death". Wrap critical asynchronous or data-driven builder widgets (like `FutureBuilder` or custom dynamic UI trees) with proper error checking and clean fallback widgets (`SizedBox.shrink()` or a polite, non-intrusive retry card) in case of null exceptions or network drops.
+
+## 21. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
 - **Check After Every Single Edit:** Immediately after writing or modifying any code block or file—and BEFORE moving on to the next file or finishing the task—you MUST inspect the IDE diagnostics / VS Code **Problems** panel (using `get_diagnostics` / IDE linter tools or running `dart analyze` / `flutter analyze` on the touched files).
 - **Mandatory Prevention of Common Flutter/Dart Analyzer Warnings:** You must proactively avoid writing patterns that trigger analyzer warnings:
   1. **`deprecated_member_use` (`withOpacity`):** NEVER use `.withOpacity(...)` on `Color`. Always use `.withValues(alpha: ...)` instead (e.g., `color.withValues(alpha: 0.5)`).
