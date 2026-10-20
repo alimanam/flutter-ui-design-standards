@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict Flutter UI/UX design rules, localization font handling, Persian (fa) locale specifics, RTL/LTR layout, 8pt spacing system, design tokens and dark mode, extreme contrast typography, accessibility, forms and input UX, responsive layout, anti-AI aesthetics, smooth micro-animations, widget and image performance, adaptive architecture and state management, component modularity, latest pub.dev packages enforcement, memory leak prevention, error boundaries, logging, testing, and real-time VS Code diagnostics verification. Always apply these rules when creating, refactoring, or styling screens, widgets, dialogs, forms, or bottom sheets.
+description: Strict Flutter UI/UX design rules, localization font handling, Persian (fa) locale specifics, RTL/LTR layout, 8pt spacing system, design tokens and dark mode, extreme contrast typography, accessibility, forms and input UX, responsive layout, mandatory overflow verification, anti-AI aesthetics, smooth micro-animations, widget and image performance, adaptive architecture and state management, component modularity, latest pub.dev packages enforcement, memory leak prevention, error boundaries, logging, testing, and real-time VS Code diagnostics verification. Always apply these rules when creating, refactoring, or styling screens, widgets, dialogs, forms, or bottom sheets.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -116,6 +116,59 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ## 18. Keyboard Dismissal & Overflow Safety
 - **Tap-to-Dismiss Keyboard:** Every screen or modal containing a `TextField` / `TextFormField` must dismiss the on-screen keyboard when the user taps outside the input area (e.g., via `onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus()` or wrapping the screen in a `GestureDetector`).
 - **Zero RenderFlex Overflows:** Forms and content screens must gracefully handle small screens and open keyboards without throwing `Bottom overflowed by X pixels` errors. Use `SingleChildScrollView`, `CustomScrollView`, or `Flexible`/`Expanded` appropriately, and always wrap multi-line dynamic text in `Expanded` or `Flexible` with proper `TextOverflow.ellipsis` where needed.
+
+### 18.1 Mandatory Overflow Verification (Every UI Change)
+Overflow safety is not assumed — it MUST be verified every time a screen, widget, dialog, form, or bottom sheet is created or modified, before the work is considered complete.
+
+- **Step 1 — Static Overflow Review:** Before finishing, re-read every touched `build` method and check each of these high-risk patterns:
+  - A `Text`, `TextField`, or dynamic child inside a `Row` without `Expanded` / `Flexible` (horizontal overflow in long Persian or English strings).
+  - A `Column` inside a fixed-height parent (`SizedBox`, `Container(height: ...)`, bottom sheet, card) whose content can grow, or that is not scrollable when the keyboard opens.
+  - Fixed `width` / `height` values on containers that hold text (these clip under text scaling).
+  - `Text` without `maxLines` + `overflow: TextOverflow.ellipsis` where the content is user- or server-provided (names, titles, addresses, prices).
+  - `Wrap` vs `Row`: chips, tags, and button groups whose count or label length is dynamic must use `Wrap`, not `Row`.
+  - Nested scrollables (`ListView` inside `Column`) without `Expanded` or a bounded height (unbounded constraint errors).
+  - `Stack` children positioned with fixed offsets that may run outside the parent on small screens.
+- **Step 2 — Stress Conditions:** Every touched UI must remain overflow-free under ALL of these conditions:
+  - Smallest supported phone size: `320 × 568` logical pixels.
+  - System text scaling at `1.3×` and `2.0×` (`MediaQuery.textScaler`).
+  - On-screen keyboard open on screens with inputs (`viewInsets.bottom` ≈ `300`).
+  - Both `fa` (RTL) and `en` (LTR) locales, with long realistic strings (e.g., a 60+ character Persian product name, a long address, a 9-digit price with currency).
+  - Landscape orientation.
+- **Step 3 — Runtime Check:** When the app is running (hot reload, simulator, or device), inspect the debug console / `flutter logs` after navigating to every touched screen and search for `overflowed by`, `RenderFlex`, `unbounded`, and `was not laid out`. Any match is a blocking defect that must be fixed before continuing. Never dismiss the yellow-black overflow stripes as cosmetic.
+- **Step 4 — Automated Overflow Test (shared components and new screens):** When the project has a `test/` folder, add or extend a widget test that pumps the widget under the stress conditions and fails on any layout exception:
+
+```dart
+Future<void> pumpOverflowCheck(
+  WidgetTester tester,
+  Widget child, {
+  Size size = const Size(320, 568),
+  double textScale = 2.0,
+  Locale locale = const Locale('fa'),
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+  await tester.pumpWidget(
+    MaterialApp(
+      locale: locale,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('fa'), Locale('en')],
+      home: MediaQuery(
+        data: MediaQueryData(
+          size: size,
+          textScaler: TextScaler.linear(textScale),
+        ),
+        child: Scaffold(body: child),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
+}
+```
+
+  Run it for both `Locale('fa')` and `Locale('en')`. Adapt the wrapper (theme, providers, localization delegates) to match the project's existing test setup.
+- **Reporting:** When finishing UI work, state briefly which overflow checks were performed (static review, stress conditions, runtime logs, tests) and the result. If a check could not be run (e.g., no running device), say so explicitly instead of implying it passed.
 
 ## 19. Button Loading & Debounce States
 - **Dimension Preservation:** When an action button enters a `loading` state, it MUST maintain its exact width and height so the layout never jumps or shifts.
@@ -234,4 +287,4 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
   6. **`depend_on_referenced_packages`:** NEVER import a package without verifying it is explicitly listed under `dependencies:` in `pubspec.yaml`.
   7. **`unnecessary_underscores` (Dart 3.7+ Wildcard Variables):** NEVER use multiple underscores like `__` or `___` for unused callback parameters. Always write single `_` wildcards.
   8. **`avoid_print`:** Covered by Rule 34; never leave `print()` calls in `lib/`.
-- **Completion Gate:** A task or step is NEVER considered complete until the VS Code Problems list for all created and modified files shows **0 errors, 0 warnings, and 0 info/lint hints**.
+- **Completion Gate:** A task or step is NEVER considered complete until the VS Code Problems list for all created and modified files shows **0 errors, 0 warnings, and 0 info/lint hints**, AND the Mandatory Overflow Verification (Rule 18.1) has passed for every touched UI.
