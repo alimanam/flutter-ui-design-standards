@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict UI/UX design rules, typography guidelines, RTL/LTR localization standards, component constraints, anti-AI custom aesthetics, smooth micro-animations, and real-time VS Code diagnostics verification for Flutter applications. Always apply these rules when creating, refactoring, or styling screens, widgets, dialogs, forms, or bottom sheets.
+description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, and real-time VS Code diagnostics verification.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -56,41 +56,48 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 - **No Unrequested Gradients:** Never apply loud, neon, or multi-color linear gradients to backgrounds, cards, AppBars, or buttons. Stick strictly to solid, clean colors defined in the app's `ColorScheme` / theme palette.
 - **Subtle Elevation & Borders:** Avoid heavy, dark drop shadows (`BoxShadow` with high opacity or large `blurRadius`). Prefer flat surfaces with subtle 1px borders (`Border.all(color: theme.dividerColor.withValues(alpha: 0.5))`) or minimal, diffused elevation (`elevation: 0` or `1`).
 
-## 10. Uniform Border Radius & Spacing Scale
+## 10. Uniform Border Radius Scale
 - **Consistent Corner Radii:** Do not mix pill-shaped (`StadiumBorder`), sharp-cornered, and heavily rounded elements randomly across screens. Enforce a unified border radius scale across the entire app:
   - **Buttons & TextFields:** `10.0` to `12.0` (`BorderRadius.circular(12)`).
   - **Cards & Containers:** `12.0` to `16.0` (`BorderRadius.circular(16)`).
   - **Dialogs & BottomSheets:** `16.0` to `20.0` (top corners for BottomSheets).
-- **8pt Grid Spacing:** Use consistent spacing multiples (`4, 8, 12, 16, 20, 24`) for padding, margins, and `SizedBox` gaps.
 
-## 11. Keyboard Dismissal & Overflow Safety
+## 11. Strict 8pt Grid Spacing System (NEW)
+- **Consistent Multiples:** Enforce strict adherence to the 8pt grid system for layout padding, margins, and component gaps. 
+- **Allowed Spacing Values:** Only use spacing multiples of `4.0`, `8.0`, `16.0`, `24.0`, `32.0`, and `48.0` (e.g., `SizedBox(height: 16)` or `EdgeInsets.all(16)`). Never use arbitrary or random spacing values like `13`, `17`, or `22`.
+
+## 12. Extreme Contrast Typography Hierarchy (NEW)
+- **Editorial Text Pairing:** Break away from monotonous, flat body text by utilizing extreme contrast in font weights:
+  - Use ultra-light weights (`FontWeight.w300`) for secondary descriptions, captions, and subtitles.
+  - Use bold/heavy weights (`FontWeight.w700` or `FontWeight.w800`) for primary metrics, amounts, and prominent section titles.
+- **Dynamic Scale:** Ensure numerical financial data or key statistics stand out visually with distinct scale contrast.
+
+## 13. Keyboard Dismissal & Overflow Safety
 - **Tap-to-Dismiss Keyboard:** Every screen or modal containing a `TextField` / `TextFormField` must dismiss the on-screen keyboard when the user taps outside the input area (e.g., via `onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus()` or wrapping the screen in a `GestureDetector`).
 - **Zero RenderFlex Overflows:** Forms and content screens must gracefully handle small screens and open keyboards without throwing `Bottom overflowed by X pixels` errors. Use `SingleChildScrollView`, `CustomScrollView`, or `Flexible`/`Expanded` appropriately, and always wrap multi-line dynamic text in `Expanded` or `Flexible` with proper `TextOverflow.ellipsis` where needed.
 
-## 12. Button Loading & Debounce States
+## 14. Button Loading & Debounce States
 - **Dimension Preservation:** When an action button enters a `loading` state, it MUST maintain its exact width and height so the layout never jumps or shifts.
 - **Double-Tap Prevention:** Disable the button (`onPressed: isLoading ? null : _handleSubmit`) while an async operation is in progress, and replace the label with a centered, appropriately sized `SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))`.
 
-## 13. Zero Emojis in UI Copy
+## 15. Zero Emojis in UI Copy
 - **Strictly Professional Text:** Never insert emojis (e.g., 🎉, ⚠️, ❌, ✅, 🚀) into UI labels, `SnackBar` messages, dialog descriptions, empty state texts, or error messages unless explicitly provided in the user's prompt.
 
-## 14. Anti-AI UI & Custom Aesthetic Guidelines
-- **Avoid Generic AI Color Palettes:** Never default to the cliché "AI purple/indigo on dark background" or generic Material 3 pastel chips unless explicitly required by the brand. Use purposeful, high-contrast, premium color harmonies (e.g., deep charcoal/slate surfaces accented with rich, restrained brand tones).
-- **Customized Card & Surface Treatment:** Avoid repetitive flat white cards with identical light shadows. Vary container styling based on hierarchy:
-  - Use subtle, clean borders (`Border.all(color: theme.dividerColor.withValues(alpha: 0.3))`) combined with flat surfaces (`elevation: 0`) instead of heavy drop shadows.
-- **Typography Hierarchy & Personality:** Break away from monotonous body text by utilizing dynamic font weights (e.g., mixing `w300` for subtitles with `w600` for key data points) to create an editorial, human-designed feel.
-- **Intentional Negative Space (Whitespace):** Do not cram elements together. Use generous, intentional whitespace (`SizedBox` heights of `24` to `32` for major section breaks) to give components room to breathe.
+## 16. Anti-AI UI & Custom Aesthetic Guidelines
+- **Avoid Generic AI Color Palettes:** Never default to the cliché "AI purple/indigo on dark background" or generic Material 3 pastel chips unless explicitly required by the brand. Use purposeful, high-contrast, premium color harmonies.
+- **Customized Card & Surface Treatment:** Avoid repetitive flat white cards with identical light shadows. Vary container styling using subtle clean borders (`Border.all(color: theme.dividerColor.withValues(alpha: 0.3))`) and flat surfaces (`elevation: 0`).
+- **Intentional Negative Space (Whitespace):** Do not cram elements together. Use generous, intentional whitespace (`SizedBox` heights of `24` to `32` for major section breaks).
 - **Customized Empty & Loading States:** Never use raw, default `CircularProgressIndicator()` in the middle of a blank screen. Always design minimalist placeholder layouts or sleek contextual loading indicators.
 
-## 15. Purposeful & Smooth Micro-Animations (No Dead UI)
+## 17. Purposeful & Smooth Micro-Animations (No Dead UI)
 - **Avoid Static, Jerky UI Transitions:** Never leave screens or components feeling dead or instantly popping into existence. Integrate purposeful, subtle micro-animations across the app without overdoing it or causing jank.
 - **Where to Apply Animations:**
   - **List Items / Feed Entries:** Use subtle entrance animations (e.g., lightweight `AnimatedSwitcher` or staggered fade-ins) when items load or update.
   - **State Switching (Tabs, Filters, Toggle Cards):** Use `AnimatedContainer`, `AnimatedCrossFade`, or smooth sizing/color transitions instead of abrupt hard switches.
-  - **Buttons & Interactive Elements:** Provide immediate, polished tactile feedback on press (e.g., gentle scale or opacity bounce using `InkWell` / custom gestures).
-- **Performance & Duration Control:** Keep animation durations short, snappy, and natural (between `200ms` to `350ms`) using smooth curves (e.g., `Curves.easeInOut` or `Curves.easeOutCubic`). Avoid long, slow, or distracting animations that slow down the user experience.
+  - **Buttons & Interactive Elements:** Provide immediate, polished tactile feedback on press (e.g., gentle scale down to `0.98` using `AnimatedContainer` or custom transitions).
+- **Performance & Duration Control:** Keep animation durations short, snappy, and natural (between `200ms` to `350ms`) using smooth curves (e.g., `Curves.easeOutCubic`). Avoid long, slow, or distracting animations.
 
-## 16. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
+## 18. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
 - **Check After Every Single Edit:** Immediately after writing or modifying any code block or file—and BEFORE moving on to the next file or finishing the task—you MUST inspect the IDE diagnostics / VS Code **Problems** panel (using `get_diagnostics` / IDE linter tools or running `dart analyze` / `flutter analyze` on the touched files).
 - **Mandatory Prevention of Common Flutter/Dart Analyzer Warnings:** You must proactively avoid writing patterns that trigger analyzer warnings:
   1. **`deprecated_member_use` (`withOpacity`):** NEVER use `.withOpacity(...)` on `Color`. Always use `.withValues(alpha: ...)` instead (e.g., `color.withValues(alpha: 0.5)`).
