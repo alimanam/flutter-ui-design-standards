@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, component modularity & puzzle-like decomposition, Riverpod, MVVM, memory leak prevention, error boundaries, and real-time VS Code diagnostics verification.
+description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, adaptive architecture and state management, component modularity, memory leak prevention, error boundaries, and real-time VS Code diagnostics verification.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -108,25 +108,21 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ## 20. Graceful Error Boundaries
 - **UI Fallback Protection:** Never let widget tree exceptions cause the infamous red "Screen of Death". Wrap critical asynchronous or data-driven builder widgets (like `FutureBuilder` or custom dynamic UI trees) with proper error checking and clean fallback widgets (`SizedBox.shrink()` or a polite, non-intrusive retry card) in case of null exceptions or network drops.
 
-## 21. Core Architecture & Clean Code Standards
-- **Architecture Adaptability:** Adapt seamlessly to the existing project architecture while maintaining strict clean code principles.
+## 21. Core Architecture Adaptability & Clean Code Standards
+- **Strict Adherence to Existing Architecture:** Always inspect and adapt to the existing project architecture (whether it's layered like `lib/providers/`, `lib/services/`, `lib/widgets/` or modular Feature-First). Never force a structural paradigm shift (like converting a Provider project to Riverpod or Feature-First) unless explicitly requested by the user.
 - **Modern Dart 3.10+ & Material 3:** Always utilize Flutter 3.x modern features, Dart 3+ syntax, and Material 3 design specifications.
 
 ## 22. Puzzle-Like Modularity & Strict File Length Limits
 - **Decomposition Principle (Like Puzzle Pieces):** Never build monolithic, oversized widgets where hundreds of lines of UI code are crammed into a single `build` method. Break down every screen into small, independent, reusable components (like assembling puzzle pieces). Each card, header, input field, and action bar must live in its own dedicated widget class.
-- **Strict File Length Limit:** NEVER write massive files containing thousands of lines of code (e.g., avoid files exceeding 600–700 lines where possible). If a screen or feature grows, immediately extract sub-widgets into separate files inside the feature's presentation folder (e.g., `widgets/`, `components/`). Clean separation guarantees maximum readability and maintainability.
+- **Strict File Length Limit:** NEVER write massive files containing thousands of lines of code (keep individual files within a clean limit of 200–600 lines max). If a screen or feature grows, immediately extract sub-widgets into separate files inside the appropriate folder (`widgets/`, `components/`, etc.). Clean separation guarantees maximum readability and maintainability.
 
-## 23. MVVM & Feature-First Layer Separation
-- **Clear Layer Boundaries:** Group features inside `lib/features/` (e.g., `auth/`, `products/`). Separate application code into distinct layers:
-  - **`presentation/`**: Contains UI screens (`Views`), modular widgets, and state logic (`ViewModels` / Notifiers).
-  - **`domain/`**: Contains immutable data models and abstract repository interfaces.
-  - **`data/`**: Contains concrete repository implementations and external API services.
+## 23. Adaptive State Management & Architecture Rules
+- **Respect Existing State Management:** Inspect `pubspec.yaml` and existing codebase patterns before writing code. 
+  - If the project uses `provider` (e.g., `ChangeNotifier`, `Provider`), continue using it according to the existing project convention.
+  - Only use `Riverpod`, `BLoC`, or `MVVM Feature-First` structures (`lib/features/`) if the project is newly initialized for them or if the user explicitly instructs you to migrate.
+- **No Unsolicited Refactoring:** Never refactor working architectural patterns or state management setups of an existing project without direct user permission.
 
-## 24. Riverpod for State Management & Dependency Injection
-- **Definitive State Management:** Utilize Riverpod as the primary solution for state management and dependency injection to ensure compile-time safety and simplified testing.
-- **Avoid Legacy Providers:** Never use `InheritedWidget` or `Provider.of<T>(context)` for dependency injection or manual state mutations (`setState` on global repos). Always rely on `ConsumerWidget`, `ConsumerStatefulWidget`, and `ref.watch()` / `ref.read()`.
-
-## 25. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
+## 24. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
 - **Check After Every Single Edit:** Immediately after writing or modifying any code block or file—and BEFORE moving on to the next file or finishing the task—you MUST inspect the IDE diagnostics / VS Code **Problems** panel (using `get_diagnostics` / IDE linter tools or running `dart analyze` / `flutter analyze` on the touched files).
 - **Mandatory Prevention of Common Flutter/Dart Analyzer Warnings:** You must proactively avoid writing patterns that trigger analyzer warnings:
   1. **`deprecated_member_use` (`withOpacity`):** NEVER use `.withOpacity(...)` on `Color`. Always use `.withValues(alpha: ...)` instead (e.g., `color.withValues(alpha: 0.5)`).
@@ -136,9 +132,9 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
      - Use `colorScheme.onSurface` instead of `colorScheme.onBackground`.
   3. **`deprecated_member_use` (State & Navigation):**
      - Use `WidgetStateProperty` / `WidgetState` instead of `MaterialStateProperty` / `MaterialState`.
-     - Use `PopScope` (with `canPop` and `onPopInvokedWithResult`) instead of `WillPopScope` or `onPopInvoked`.
-  4. **`use_build_context_synchronously`:** NEVER use `BuildContext` across async gaps (`await`) without an immediate mounted check. Always place `if (!context.mounted) return;` (or `if (!mounted) return;` inside `State`) right before accessing `context` after an `await`.
-  5. **`unnecessary_import`:** NEVER import `dart:typed_data` when `package:flutter/foundation.dart`, `package:flutter/material.dart`, or `package:flutter/services.dart` is already imported in the file. Remove any redundant imports immediately.
+     - Use `PopScope` (canPop and onPopInvokedWithResult) instead of WillPopScope.
+  4. **`use_build_context_synchronously`:** NEVER use `BuildContext` across async gaps (`await`) without an immediate mounted check. Always place `if (!context.mounted) return;` right before accessing `context` after an `await`.
+  5. **`unnecessary_import`:** NEVER import `dart:typed_data` when `package:flutter/foundation.dart` or `material.dart` is already imported.
   6. **`depend_on_referenced_packages`:** NEVER import a package without verifying it is explicitly listed under `dependencies:` in `pubspec.yaml`.
-  7. **`unnecessary_underscores` (Dart 3.7+ Wildcard Variables):** NEVER use multiple underscores like `__` or `___` for unused callback parameters. In modern Dart, always write single `_` wildcards (e.g., `(context, _, _) => ...`).
+  7. **`unnecessary_underscores` (Dart 3.7+ Wildcard Variables):** NEVER use multiple underscores like `__` or `___` for unused callback parameters. Always write single `_` wildcards.
 - **Completion Gate:** A task or step is NEVER considered complete until the VS Code Problems list for all created and modified files shows **0 errors, 0 warnings, and 0 info/lint hints**.
