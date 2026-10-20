@@ -1,6 +1,6 @@
 ---
 name: flutter-ui-design-standards
-description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, adaptive architecture and state management, component modularity, memory leak prevention, error boundaries, and real-time VS Code diagnostics verification.
+description: Strict Flutter UI/UX design rules, localization font handling, 8pt spacing system, extreme contrast typography, anti-AI aesthetics, smooth micro-animations, adaptive architecture and state management, component modularity, latest pub.dev packages enforcement, memory leak prevention, error boundaries, and real-time VS Code diagnostics verification.
 ---
 
 # Flutter UI/UX Design Standards & Constraints
@@ -109,7 +109,7 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 - **UI Fallback Protection:** Never let widget tree exceptions cause the infamous red "Screen of Death". Wrap critical asynchronous or data-driven builder widgets (like `FutureBuilder` or custom dynamic UI trees) with proper error checking and clean fallback widgets (`SizedBox.shrink()` or a polite, non-intrusive retry card) in case of null exceptions or network drops.
 
 ## 21. Core Architecture Adaptability & Clean Code Standards
-- **Strict Adherence to Existing Architecture:** Always inspect and adapt to the existing project architecture (whether it's layered like `lib/providers/`, `lib/services/`, `lib/widgets/` or modular Feature-First). Never force a structural paradigm shift (like converting a Provider project to Riverpod or Feature-First) unless explicitly requested by the user.
+- **Strict Adherence to Existing Architecture:** Always inspect and adapt to the existing project architecture (whether it's layered like `lib/providers/`, `lib/services/`, `lib/widgets/` or modular Feature-First). Never force a structural paradigm shift unless explicitly requested by the user.
 - **Modern Dart 3.10+ & Material 3:** Always utilize Flutter 3.x modern features, Dart 3+ syntax, and Material 3 design specifications.
 
 ## 22. Puzzle-Like Modularity & Strict File Length Limits
@@ -119,10 +119,14 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ## 23. Adaptive State Management & Architecture Rules
 - **Respect Existing State Management:** Inspect `pubspec.yaml` and existing codebase patterns before writing code. 
   - If the project uses `provider` (e.g., `ChangeNotifier`, `Provider`), continue using it according to the existing project convention.
-  - Only use `Riverpod`, `BLoC`, or `MVVM Feature-First` structures (`lib/features/`) if the project is newly initialized for them or if the user explicitly instructs you to migrate.
+  - Only use alternative state management architectures if the project is newly initialized for them or if the user explicitly instructs you to migrate.
 - **No Unsolicited Refactoring:** Never refactor working architectural patterns or state management setups of an existing project without direct user permission.
 
-## 24. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
+## 24. Latest Pub.dev Package Versions Enforcement
+- **Always Use Up-to-Date Packages:** When adding dependencies or utilizing third-party packages, always target the **latest stable version** available on `pubspec.yaml` / `pub.dev`, avoiding outdated legacy versions unless explicitly restricted by the project.
+- **Conflict Exception Handling:** If a package version creates a strict dependency conflict (`dependency constraint violation`) with existing packages in the project, gracefully fallback to a compatible matching version while notifying the user.
+
+## 25. Immediate VS Code Problems & Diagnostics Resolution (Zero-Debt Rule)
 - **Check After Every Single Edit:** Immediately after writing or modifying any code block or file—and BEFORE moving on to the next file or finishing the task—you MUST inspect the IDE diagnostics / VS Code **Problems** panel (using `get_diagnostics` / IDE linter tools or running `dart analyze` / `flutter analyze` on the touched files).
 - **Mandatory Prevention of Common Flutter/Dart Analyzer Warnings:** You must proactively avoid writing patterns that trigger analyzer warnings:
   1. **`deprecated_member_use` (`withOpacity`):** NEVER use `.withOpacity(...)` on `Color`. Always use `.withValues(alpha: ...)` instead (e.g., `color.withValues(alpha: 0.5)`).
