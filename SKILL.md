@@ -100,6 +100,89 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
   - When a bottom sheet contains two action buttons (e.g., Confirm and Cancel), place them **side-by-side horizontally in a `Row`** using equal `Expanded` wrappers and a consistent 8pt grid gap (e.g., `SizedBox(width: 8)`). Never stack them vertically with mismatched styles.
   - Both buttons must share the exact same height (`44.0` to `48.0`), border radius, and text size, with cohesive color pairing (e.g., a primary filled button next to a matching secondary tonal/filled button of identical dimensions).
 
+### 15.1 Compact BottomSheet Header — No Excess Top Space (Recurring AI Mistake)
+> **This is a known, repeatedly reported AI-generated defect. It MUST NEVER appear again.** Every bottom sheet you create or modify must be checked against this rule before the work is considered complete.
+
+- **The Defect:** The gap between the drag handle (or the sheet's top edge) and the header title is visibly too tall, often roughly double what it should be. The title looks like it is floating in the middle of empty space instead of sitting right under the handle.
+- **Root Cause — Stacked Top Spacing:** Material 3 `showDragHandle: true` already reserves a ~`48`px tall touch area for the handle (the visible pill is only `4`px tall, the rest is empty space). The AI then adds a second layer of top spacing on top of it:
+  - Header padding such as `EdgeInsets.fromLTRB(24, 24, 24, 16)` or `EdgeInsets.all(24)`.
+  - A leading `SizedBox(height: 16 / 20 / 24)` before the title.
+  - An extra `padding` on the outer sheet `Container` / `Padding` that wraps the whole content.
+  - A manually drawn handle with a large `margin` / `vertical padding` *in addition to* `showDragHandle: true` (two handles' worth of space).
+- **The Rule — Only ONE Source of Top Spacing:**
+  - If `showDragHandle: true` is used, the header's top padding MUST be `0` (maximum `8`). The handle area already provides the breathing room.
+  - If you draw a custom handle, set `showDragHandle: false` and give the handle a compact vertical margin (`8`–`12` top, `8` bottom). Then the header top padding is `0`–`8`.
+  - If the sheet has no handle at all, the header top padding is `16`–`24` (one value, applied once).
+  - Never combine `showDragHandle: true` + header top padding ≥ `16` + leading `SizedBox`. Any two of these stacked together is a defect.
+- **Target Measurement:** The distance from the bottom of the visible handle pill to the top of the title text should be about `12`–`20` logical pixels. If it is larger than ~`24`, the sheet fails this rule.
+
+```dart
+// ❌ WRONG — handle area (~48px) + 24px top padding + SizedBox = huge empty gap
+showModalBottomSheet(
+  context: context,
+  showDragHandle: true,
+  builder: (context) => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 16),
+        Text('Sleep Timer', style: theme.textTheme.titleMedium),
+        // ...
+      ],
+    ),
+  ),
+);
+
+// ✅ CORRECT — the drag handle area is the only top spacing
+showModalBottomSheet(
+  context: context,
+  showDragHandle: true,
+  builder: (context) => SafeArea(
+    top: false,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Sleep Timer', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 16),
+          // ...
+        ],
+      ),
+    ),
+  ),
+);
+
+// ✅ CORRECT — custom compact handle, built-in handle turned off
+showModalBottomSheet(
+  context: context,
+  showDragHandle: false,
+  builder: (context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        margin: const EdgeInsets.only(top: 8, bottom: 8),
+        width: 32,
+        height: 4,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+        child: Text('Sleep Timer', style: theme.textTheme.titleMedium),
+      ),
+      // ...
+    ],
+  ),
+);
+```
+
+- **Shared Sheet Wrapper:** If the project has a reusable sheet scaffold (e.g., `AppBottomSheet`), fix the spacing there once and reuse it everywhere instead of re-declaring header padding in each sheet.
+- **Verification:** Before finishing any bottom sheet work, explicitly add up every vertical spacing value above the title (drag handle area + outer padding + header padding + `SizedBox`es). If more than one of them is non-zero, remove the extras. State in your report that the header top spacing was checked.
+
 ## 16. Confirmation Dialogs (AlertDialogs)
 - **Compact & Standard Typography:** Keep typography inside confirmation modals clean, proportional, and never oversized:
   - **Dialog Title:** `15.0` to `16.0` (`FontWeight.w600`). Never use large display sizes.
