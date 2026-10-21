@@ -298,6 +298,60 @@ Future<void> pumpOverflowCheck(
 - **Never Use Column for Long Lists:** NEVER wrap dynamic or long lists inside a `Column` or `ListView(shrinkWrap: true, physics: NeverScrollableScrollPhysics())` unless the total item count is strictly fixed and very small (e.g., 3 to 5 items).
 - **Lazy Rendering Enforcement:** Always use `ListView.builder`, `ListView.separated`, or `SliverList` for dynamic or long datasets to ensure proper lazy loading, virtualization, and smooth 60/120fps scrolling performance.
 
+### 25.1 Last List Item Must Clear the System Navigation Bar (Recurring AI Mistake)
+> **This is a known, repeatedly reported AI-generated defect. It MUST NEVER appear again.** Every scrollable list or scroll view you create or modify must be checked against this rule before the work is considered complete.
+
+- **The Defect:** When the user scrolls to the very end of a list, the last item sits partly or fully under the phone's system navigation bar (Android 3-button / gesture bar, iOS Home Indicator), or under a floating element (FAB, mini-player, bottom bar overlay). The last item cannot be read or tapped.
+- **Root Cause:** The app draws edge-to-edge (default on Android 15+ and with `SystemUiMode.edgeToEdge`), so the body extends behind the system nav bar. The AI builds a `ListView` / `CustomScrollView` with zero or a small fixed bottom padding (e.g., `EdgeInsets.all(16)`) and never adds the system bottom inset. Floating overlays placed in a `Stack` (mini-player, custom bottom bar) make it worse, because their height is not reserved either.
+- **The Rule — Bottom Padding = System Inset + Overlay Height + Base Gap:**
+  - Every vertical scrollable that reaches the bottom of the screen MUST add `MediaQuery.paddingOf(context).bottom` (or `viewPadding.bottom`) to its bottom padding.
+  - If a FAB, mini-player, or any widget floats over the list (`Stack`, `floatingActionButton`, `extendBody: true`), add that widget's height too (e.g., `kMiniPlayerHeight`, `56` + `16` for a standard FAB).
+  - Keep a base gap on the 8pt grid (`8`–`16`) so the last item does not touch the edge.
+  - Apply the padding INSIDE the scroll view (`ListView(padding: ...)` or a trailing `SliverPadding` / `SliverToBoxAdapter(SizedBox(height: ...))`), NOT by wrapping the whole list in `SafeArea` / `Padding`. Content must still scroll behind the nav bar; only the end of the list gets extra room.
+  - `SafeArea(bottom: true)` around the list is acceptable only when the design intentionally stops the scroll area above the nav bar, and it still does NOT cover floating overlays.
+- **Do Not Assume Scaffold Handles It:** A `Scaffold` with a `bottomNavigationBar` already consumes the inset for the body, but a body with `extendBody: true`, a `Stack`-based overlay, a full-screen `CustomScrollView`, or a list inside a bottom sheet does NOT. Check each case explicitly.
+
+```dart
+// ❌ WRONG — last item hides under the system nav bar and the mini-player
+Stack(
+  children: [
+    ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: tracks.length,
+      itemBuilder: (context, i) => TrackTile(track: tracks[i]),
+    ),
+    const Align(alignment: Alignment.bottomCenter, child: MiniPlayer()),
+  ],
+);
+
+// ✅ CORRECT — system inset + overlay height + base gap, inside the scroll view
+final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+Stack(
+  children: [
+    ListView.builder(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + kMiniPlayerHeight + 16),
+      itemCount: tracks.length,
+      itemBuilder: (context, i) => TrackTile(track: tracks[i]),
+    ),
+    const Align(alignment: Alignment.bottomCenter, child: MiniPlayer()),
+  ],
+);
+
+// ✅ CORRECT — slivers: trailing padding sliver
+CustomScrollView(
+  slivers: [
+    // ... app bar and content slivers
+    SliverPadding(
+      padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 16),
+    ),
+  ],
+);
+```
+
+- **Shared Helper:** If the project has many lists, add one helper (e.g., `context.listBottomPadding({double overlay = 0})`) that returns `MediaQuery.paddingOf(context).bottom + overlay + AppSpacing.s16`, and use it everywhere instead of re-computing it per screen.
+- **Verification:** Before finishing any screen with a scrollable list, scroll to the very end (mentally in a static review, or on a device/emulator with gesture AND 3-button navigation) and confirm the last item is fully visible and tappable above the nav bar and above every floating overlay. State in your report that the list bottom inset was checked.
+
 ## 26. Image & Asset Handling
 - **Cached Network Images:** Load remote images with `cached_network_image` (or the project's existing equivalent), always providing a styled `placeholder` and an `errorWidget`. Never use bare `Image.network` without loading and error handling.
 - **Decode at Display Size:** Set `cacheWidth` / `cacheHeight` (or `memCacheWidth` / `memCacheHeight`) to roughly the rendered size multiplied by the device pixel ratio, so full-resolution images are never decoded for small thumbnails.
