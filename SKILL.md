@@ -103,21 +103,39 @@ You must strictly enforce the following UI/UX and code-quality constraints whene
 ### 15.1 Compact BottomSheet Header — No Excess Top Space (Recurring AI Mistake)
 > **This is a known, repeatedly reported AI-generated defect. It MUST NEVER appear again.** Every bottom sheet you create or modify must be checked against this rule before the work is considered complete.
 
-- **The Defect:** The gap between the drag handle (or the sheet's top edge) and the header title is visibly too tall, often roughly double what it should be. The title looks like it is floating in the middle of empty space instead of sitting right under the handle.
-- **Root Cause — Stacked Top Spacing:** Material 3 `showDragHandle: true` already reserves a ~`48`px tall touch area for the handle (the visible pill is only `4`px tall, the rest is empty space). The AI then adds a second layer of top spacing on top of it:
+- **The Defect:** The gap between the drag handle (or the sheet's top edge) and the header title is visibly too tall, often `40`px or more. The title looks like it is floating in the middle of empty space instead of sitting right under the handle.
+- **Root Cause #1 — Built-in Drag Handle Area:** Material 3 `showDragHandle: true` reserves a `48`px tall touch area for the handle: `22`px empty padding above + `4`px visible pill + `22`px empty padding below. Those `22`px under the pill alone already exceed a compact gap, and they cannot be reduced from the sheet content.
+- **Root Cause #2 — Title Placed Inside a `ListTile`:** Rendering the sheet title as the first `ListTile` (or `ListTile.title`) adds its default minimum height, `contentPadding`, and vertical centering, which pushes the text down by roughly another `16`px.
+- **Root Cause #3 — Stacked Extra Spacing:** The AI then adds even more top spacing on top of the above:
   - Header padding such as `EdgeInsets.fromLTRB(24, 24, 24, 16)` or `EdgeInsets.all(24)`.
   - A leading `SizedBox(height: 16 / 20 / 24)` before the title.
   - An extra `padding` on the outer sheet `Container` / `Padding` that wraps the whole content.
-  - A manually drawn handle with a large `margin` / `vertical padding` *in addition to* `showDragHandle: true` (two handles' worth of space).
-- **The Rule — Only ONE Source of Top Spacing:**
-  - If `showDragHandle: true` is used, the header's top padding MUST be `0` (maximum `8`). The handle area already provides the breathing room.
-  - If you draw a custom handle, set `showDragHandle: false` and give the handle a compact vertical margin (`8`–`12` top, `8` bottom). Then the header top padding is `0`–`8`.
-  - If the sheet has no handle at all, the header top padding is `16`–`24` (one value, applied once).
-  - Never combine `showDragHandle: true` + header top padding ≥ `16` + leading `SizedBox`. Any two of these stacked together is a defect.
-- **Target Measurement:** The distance from the bottom of the visible handle pill to the top of the title text should be about `12`–`20` logical pixels. If it is larger than ~`24`, the sheet fails this rule.
+  - A manually drawn handle *in addition to* `showDragHandle: true` (two handles' worth of space).
+- **The Rule — Mandatory Compact Structure:**
+  - **Disable the built-in handle:** Always set `showDragHandle: false` on `showModalBottomSheet` / `BottomSheetThemeData`. Do not rely on the default `48`px handle area.
+  - **Use a compact custom handle (`CompactSheetHandle`):** A `32 × 4` pill with `margin: EdgeInsets.only(top: 8, bottom: 8)`. Nothing else above it.
+  - **Use a compact header (`CompactSheetHeader`):** A plain `Padding` + `Text` with a top padding of about `4`px, placed directly under the handle. NEVER render the sheet title as a `ListTile`.
+  - **No divider under the title:** Do NOT add a `Divider` (or a bordered container) between the sheet title and its content. Separation comes from spacing on the 8pt grid, not lines.
+  - **Never stack spacing:** Do not add a leading `SizedBox`, outer top padding, or a second handle on top of this structure.
+  - If the sheet intentionally has no handle at all, the header top padding is `16`–`24` (one value, applied once).
+- **Target Measurement:** The distance from the bottom of the visible handle pill to the top of the title text should be `12`–`14` logical pixels (absolute maximum `20`). If it is larger, the sheet fails this rule.
 
 ```dart
-// ❌ WRONG — handle area (~48px) + 24px top padding + SizedBox = huge empty gap
+// ❌ WRONG — built-in handle (22 + 4 + 22) + ListTile title (~16) + Divider
+showModalBottomSheet(
+  context: context,
+  showDragHandle: true,
+  builder: (context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ListTile(title: Text('Sleep Timer', style: theme.textTheme.titleMedium)),
+      const Divider(),
+      // ...
+    ],
+  ),
+);
+
+// ❌ WRONG — handle area + 24px top padding + leading SizedBox = huge empty gap
 showModalBottomSheet(
   context: context,
   showDragHandle: true,
@@ -134,54 +152,60 @@ showModalBottomSheet(
   ),
 );
 
-// ✅ CORRECT — the drag handle area is the only top spacing
-showModalBottomSheet(
-  context: context,
-  showDragHandle: true,
-  builder: (context) => SafeArea(
-    top: false,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Sleep Timer', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 16),
-          // ...
-        ],
-      ),
-    ),
-  ),
-);
+// ✅ CORRECT — built-in handle off, compact handle + compact header, no divider
+class CompactSheetHandle extends StatelessWidget {
+  const CompactSheetHandle({super.key});
 
-// ✅ CORRECT — custom compact handle, built-in handle turned off
-showModalBottomSheet(
-  context: context,
-  showDragHandle: false,
-  builder: (context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
         margin: const EdgeInsets.only(top: 8, bottom: 8),
         width: 32,
         height: 4,
         decoration: BoxDecoration(
-          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-        child: Text('Sleep Timer', style: theme.textTheme.titleMedium),
-      ),
-      // ...
-    ],
+    );
+  }
+}
+
+class CompactSheetHeader extends StatelessWidget {
+  const CompactSheetHeader(this.title, {super.key});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+}
+
+showModalBottomSheet(
+  context: context,
+  showDragHandle: false,
+  builder: (context) => SafeArea(
+    top: false,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const CompactSheetHandle(),
+        const CompactSheetHeader('Sleep Timer'),
+        // ... content, no Divider above it
+      ],
+    ),
   ),
 );
 ```
 
-- **Shared Sheet Wrapper:** If the project has a reusable sheet scaffold (e.g., `AppBottomSheet`), fix the spacing there once and reuse it everywhere instead of re-declaring header padding in each sheet.
-- **Verification:** Before finishing any bottom sheet work, explicitly add up every vertical spacing value above the title (drag handle area + outer padding + header padding + `SizedBox`es). If more than one of them is non-zero, remove the extras. State in your report that the header top spacing was checked.
+- **Apply to Every Sheet:** Put `CompactSheetHandle` and `CompactSheetHeader` in the project's shared sheets file (e.g., `sheets.dart` / `AppBottomSheet`) and use them in EVERY bottom sheet of the app (timers, speed, add-to-playlist, item menus, lyrics, filters, etc.). Never re-declare handle or header spacing per sheet.
+- **Verification:** Before finishing any bottom sheet work, explicitly confirm: `showDragHandle: false`, the title is not a `ListTile`, there is no `Divider` under the title, and the handle-to-title gap adds up to `12`–`14`px (handle bottom margin `8` + header top padding `4` + text leading). State in your report that the header top spacing was checked.
 
 ## 16. Confirmation Dialogs (AlertDialogs)
 - **Compact & Standard Typography:** Keep typography inside confirmation modals clean, proportional, and never oversized:
